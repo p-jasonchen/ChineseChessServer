@@ -9,6 +9,9 @@ public class Constants {
 	public final static String SERVER_IP = "localhost";
 	public final static String PROXY_SERVER_IP = "localhost";
 	
+	public final static String CMD = "cmd";
+	public final static String PLAYER_ID = "playerId";
+	
 	public final static Vector<String>  V_PLAYER_ID = new Vector<String>();
 	
 	static{
@@ -22,14 +25,19 @@ public class Constants {
 		V_PLAYER_ID.add("Íæ¼Ò8");
 		V_PLAYER_ID.add("Íæ¼Ò9");
 		V_PLAYER_ID.add("Íæ¼Ò10");
+		//V_PLAYER_ID.clear();
 	}
 	
 }
 
 class ChessProtocal{
+	public final static int HEART_BEAT = 0;
 	public final static int SET_PLAYER_ID  = 1;	
 	public final static int MOVE_PIECE = 2;
 	public final static int PLAYER_IN = 3;
 	public final static int PLAYER_OUT = 4;
+	public final static int GAME_REQUEST = 5;	
+	public final static int GAME_RESPONSE = 6;	
+	
 }
 

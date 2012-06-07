@@ -1,0 +1,6 @@
+.svn
+build
+.settings
+*~
+.project
+bin

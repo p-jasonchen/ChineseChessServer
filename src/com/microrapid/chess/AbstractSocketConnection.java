@@ -7,6 +7,7 @@ import org.xlightweb.TextMessage;
 
 public interface  AbstractSocketConnection {
 	public int writeMessage(String msg);
+	public void onMessage(String msg);
 }
 
 class WSocketConnection implements AbstractSocketConnection{
@@ -23,5 +24,10 @@ class WSocketConnection implements AbstractSocketConnection{
 			e.printStackTrace();
 		}
 		return 0;
+	}
+	@Override
+	public void onMessage(String msg) {
+		
+		
 	}
 }

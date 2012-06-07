@@ -3,8 +3,10 @@ package com.microrapid.chess;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.xlightweb.HttpResponse;
 import org.xlightweb.IHttpExchange;
 import org.xlightweb.IHttpRequest;
@@ -42,7 +44,7 @@ public class WebSocketProxyServer {
 			e.printStackTrace();
 		}
 		
-		
+		/*
 		HttpClient httpClient = new HttpClient();             
 		httpClient.setConnectTimeoutMillis(60 * 1000);  
 		String url = "ws://" + Constants.SERVER_IP + ":" + Constants.SERVER_PORT;
@@ -52,7 +54,7 @@ public class WebSocketProxyServer {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}  
+		}*/  
 	}
 	
 	public  static void main(String[] args){
@@ -78,11 +80,14 @@ public class WebSocketProxyServer {
 			String playerID = playerManager.addPlayerSocketConnection(wsCon);
 			
 			JSONObject setPlayerIdObj=new JSONObject();
-			setPlayerIdObj.put("cmd", ChessProtocal.SET_PLAYER_ID);
-			setPlayerIdObj.put("playerID", playerID);
+			setPlayerIdObj.put(Constants.CMD, ChessProtocal.SET_PLAYER_ID);
+			setPlayerIdObj.put(Constants.PLAYER_ID, playerID);
 			String jsonString = setPlayerIdObj.toJSONString();
 			Log.i(TAG, jsonString);
 			webStream.writeMessage(new TextMessage(jsonString));
+			if(null == playerID){
+				webStream.close();
+			}
 		}
 	
 		@Override
@@ -90,8 +95,10 @@ public class WebSocketProxyServer {
 			// TODO Auto-generated method stub
 			Log.i(TAG, "onDisconnect, id : " + webStream.getId());
 			WSocketConnection wsCon = socketMap.get(webStream);
-			if(null != wsCon)
+			if(null != wsCon){
 				playerManager.removePlayerSocketConnection(wsCon);
+				socketMap.remove(webStream);
+			}
 		}
 	
 		@Override
@@ -99,11 +106,58 @@ public class WebSocketProxyServer {
 			TextMessage msg = webStream.readTextMessage();
 			String s = msg.toString();
 			Log.i(TAG, "onMessage, id : " + webStream.getId() + "\tmessage : " + s);
+			WSocketConnection myCon = socketMap.get(webStream);
+			String myId = playerManager.getPlayerId(myCon);			
+			JSONObject jsonObj = (JSONObject) JSONValue.parse(s);
+			long cmd =  (Long)jsonObj.get(Constants.CMD);
+			switch((int)cmd){
+				case ChessProtocal.GAME_REQUEST:{
+					String playerId = (String) jsonObj.get(Constants.PLAYER_ID);					
+					AbstractSocketConnection con = playerManager.getPlayerSocketConnection(playerId);
+					if(null != con){						
+						jsonObj.put(Constants.PLAYER_ID, myId);
+						String jsonString = jsonObj.toJSONString();
+						con.writeMessage(jsonString);
+						playerManager.setEnemy(myId, playerId);
+					}
+					break;
+				}
+				case ChessProtocal.GAME_RESPONSE:{
+					String playerId = (String) jsonObj.get(Constants.PLAYER_ID);					
+					AbstractSocketConnection con = playerManager.getPlayerSocketConnection(playerId);
+					if(null != con){					
+						String jsonString = jsonObj.toJSONString();
+						con.writeMessage(jsonString);
+						long result =  (Long)(jsonObj.get("result"));
+						if(result == 0){
+							playerManager.resetEnemy(myId, playerId);
+						}
+					}
+					break;
+				}
+					
+				case ChessProtocal.MOVE_PIECE:{
+					AbstractSocketConnection enemyCon = playerManager.getEnemyAbstractSocketConnection(myCon);
+					if(null != enemyCon){
+						String jsonString = jsonObj.toJSONString();
+						Log.i(TAG, "writeMessage : " + s);
+						enemyCon.writeMessage(jsonString);
+					}
+					break;
+				}
+				case ChessProtocal.HEART_BEAT:{
+					Log.i(TAG, "HEART_BEAT packet from : " + myId);break;
+				}
+			}
+			
+			
+			
+			/*
 			if(null != webSocketConnection){
 				webSocketConnection.writeMessage(msg);
 			}else{
 				Log.e(TAG, "webSocketConnection is null");
-			}
+			}*/
 		}
 	 } 
 }
