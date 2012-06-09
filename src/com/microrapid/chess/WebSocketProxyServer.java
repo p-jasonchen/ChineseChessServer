@@ -26,7 +26,7 @@ public class WebSocketProxyServer {
 	
 	public WebSocketProxyServer(){
 		try {
-			server = new HttpServer(Constants.PROXY_SERVER_PORT, new MyRequestHandler());
+			server = new HttpServer(Constants.PROXY_SERVER_IP, Constants.PROXY_SERVER_PORT, new MyRequestHandler());
 			// setting some properties 
 			server.setMaxTransactions(400);
 			server.setRequestTimeoutMillis(5 * 60 * 1000);  
@@ -109,7 +109,12 @@ public class WebSocketProxyServer {
 			WSocketConnection myCon = socketMap.get(webStream);
 			String myId = playerManager.getPlayerId(myCon);			
 			JSONObject jsonObj = (JSONObject) JSONValue.parse(s);
-			long cmd =  (Long)jsonObj.get(Constants.CMD);
+			if(null ==jsonObj)
+				return;
+			Long cmdLong =  (Long)jsonObj.get(Constants.CMD);
+			if(null == cmdLong)
+				return;
+			long cmd = cmdLong;
 			switch((int)cmd){
 				case ChessProtocal.GAME_REQUEST:{
 					String playerId = (String) jsonObj.get(Constants.PLAYER_ID);					
